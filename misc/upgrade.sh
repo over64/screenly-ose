@@ -33,8 +33,8 @@ python $SCREENLY/misc/migrate.py
 echo "Restarting app-server..."
 sudo supervisorctl restart screenly
 
-echo "Restarting viewer module..."
-pkill -f "viewer.py"
+echo "Restarting X(viewer)"
+sudo service lightdm restart
 
 # Make sure we have proper framebuffer depth.
 if grep -q framebuffer_depth /boot/config.txt; then
