@@ -35,6 +35,7 @@ sudo supervisorctl restart screenly
 
 echo "Restarting X(viewer)"
 sudo pkill -f "xloader.sh"
+sudo service lightdm restart
 
 # Make sure we have proper framebuffer depth.
 if grep -q framebuffer_depth /boot/config.txt; then
