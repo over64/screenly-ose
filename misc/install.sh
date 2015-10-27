@@ -84,6 +84,9 @@ ln -s "$HOME/screenly/misc/lxde-rc.xml" "$HOME/.config/openbox/lxde$SUFFIX-rc.xm
 
 sudo sed -e 's/^#xserver-command=X$/xserver-command=X -nocursor/g' -i /etc/lightdm/lightdm.conf
 
+echo "Install update test script into crontab"
+echo "0 0 * * * cd $HOME/screenly && python updater.py" | crontab
+
 # Make sure we have proper framebuffer depth.
 if grep -q framebuffer_depth /boot/config.txt; then
   sudo sed 's/^framebuffer_depth.*/framebuffer_depth=32/' -i /boot/config.txt

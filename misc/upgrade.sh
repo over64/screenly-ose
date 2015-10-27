@@ -37,6 +37,9 @@ echo "Restarting X (viewer)..."
 sudo pkill -f "xloader.sh"
 sudo service lightdm restart
 
+echo "Install update test script into crontab"
+echo "0 0 * * * cd $HOME/screenly && python updater.py" | crontab
+
 # Make sure we have proper framebuffer depth.
 if grep -q framebuffer_depth /boot/config.txt; then
   sudo sed 's/^framebuffer_depth.*/framebuffer_depth=32/' -i /boot/config.txt
