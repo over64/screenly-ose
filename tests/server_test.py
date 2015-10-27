@@ -9,6 +9,7 @@ import assets_helper
 import db
 import server
 import utils
+from copy import deepcopy
 
 # fixtures chronology
 #
@@ -90,10 +91,6 @@ asset_z = {
     'is_enabled': 1,
     'nocache': 0,
 }
-url_fail = 'http://doesnotwork.example.com'
-url_redir = 'http://example.com'
-uri_ = '/home/user/file'
-#url_timeout = 'http://...'
 
 
 class Req():
@@ -101,15 +98,28 @@ class Req():
         self.POST = asset
 
 
-class URLHelperTest(unittest.TestCase):
-    def test_url_1(self):
-        self.assertTrue(server.url_fails(url_fail))
+class AssetHelperTest(unittest.TestCase):
+    def test_is_active(self):
+        asset = deepcopy(asset_x)
 
-    def test_url_2(self):
-        self.assertFalse(server.url_fails(url_redir))
+        asset['is_enabled'] = True
+        asset['start_date'] = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
+        asset['end_date'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
 
-    def test_url_3(self):
-        self.assertFalse(server.url_fails(uri_))
+        self.assertTrue(assets_helper.is_active(asset))
+
+        asset['is_enabled'] = False
+        self.assertFalse(assets_helper.is_active(asset))
+
+        asset['is_enabled'] = True
+
+        asset['start_date'] = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
+        asset['end_date'] = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
+        self.assertFalse(assets_helper.is_active(asset))
+
+        asset['start_date'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        asset['end_date'] = datetime.datetime.utcnow() + datetime.timedelta(seconds=10)
+        self.assertFalse(assets_helper.is_active(asset))
 
 
 class DBHelperTest(unittest.TestCase):
