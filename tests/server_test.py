@@ -140,6 +140,18 @@ class DBHelperTest(unittest.TestCase):
         self.assertEqual([asset_y, asset_x], should_be_y_x)
     # ✂--------
 
+    def test_create_find_by_id(self):
+        assets_helper.create(self.conn, asset_x)
+        should_be_x = assets_helper.read(self.conn, asset_id=u'4c8dbce552edb5812d3a866cfe5f159d')
+        self.assertEqual(asset_x, should_be_x)
+    # ✂--------
+
+    def test_create_multiple_read_assets(self):
+        assets_helper.create_multiple(self.conn, [asset_x, asset_y])
+        should_be_y_x = assets_helper.read(self.conn)
+        self.assertEqual([asset_y, asset_x], should_be_y_x)
+    # ✂--------
+
     def test_create_update_read_asset(self):
         assets_helper.create(self.conn, asset_x)
         asset_x_ = asset_x.copy()
