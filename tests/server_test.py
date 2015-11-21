@@ -131,6 +131,7 @@ class DBHelperTest(unittest.TestCase):
 
     def tearDown(self):
         self.conn.close()
+        assets_helper.get_time = datetime.datetime.utcnow
     # ✂--------
 
     def test_create_read_asset(self):

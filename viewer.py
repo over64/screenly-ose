@@ -35,6 +35,7 @@ SCREENLY_HTML = '/tmp/screenly_html/'
 LOAD_SCREEN = '/screenly/loading.jpg'  # relative to $HOME
 UZBLRC = '/screenly/misc/uzbl.rc'  # relative to $HOME
 INTRO = '/screenly/intro-template.html'
+SHUFFLE_MAX_REPEAT = 5
 
 
 # Silence urllib info messages ('Starting new HTTP connection')
@@ -53,6 +54,7 @@ HOME = None
 arch = None
 db_conn = None
 
+get_time = datetime.utcnow
 
 def sigusr1(signum, frame):
     """
@@ -72,71 +74,74 @@ def sigusr2(signum, frame):
 
 class Scheduler(object):
     def __init__(self, *args, **kwargs):
-        logging.debug('Scheduler init')
         self.assets = []
         self.deadline = None
         self.index = 0
         self.counter = 0
-        self.update_playlist()
+        self.last_update_db_mtime = 0
 
     def get_next_asset(self):
-        logging.debug('get_next_asset')
         self.refresh_playlist()
-        logging.debug('get_next_asset after refresh')
+
         if not self.assets:
             return None
+
         idx = self.index
         self.index = (self.index + 1) % len(self.assets)
-        logging.debug('get_next_asset counter %s returning asset %s of %s', self.counter, idx + 1, len(self.assets))
-        if settings['shuffle_playlist'] and self.index == 0:
+
+        logging.debug('get_next_asset repeated: %s. Returning asset %s of %s', self.counter, idx + 1, len(self.assets))
+
+        if self.index == 0:
             self.counter += 1
+
         return self.assets[idx]
 
     def refresh_playlist(self):
-        logging.debug('refresh_playlist')
-        time_cur = datetime.utcnow()
-        logging.debug('refresh: counter: (%s) deadline (%s) timecur (%s)', self.counter, self.deadline, time_cur)
+        time_cur = get_time()
+        logging.debug('refresh_playlist: counter: (%s) deadline (%s) timecur (%s)', self.counter, self.deadline, time_cur)
+
         if self.get_db_mtime() > self.last_update_db_mtime:
-            logging.debug('updating playlist due to database modification')
+            logging.info('updating playlist due to database modification')
             self.update_playlist()
-        elif settings['shuffle_playlist'] and self.counter >= 5:
+        elif settings['shuffle_playlist'] and self.counter >= SHUFFLE_MAX_REPEAT:
+            logging.info('shuffle playlist due to %s repeats', SHUFFLE_MAX_REPEAT)
             self.update_playlist()
         elif self.deadline and self.deadline <= time_cur:
+            logging.info('update playlist due to some assets became inactive')
             self.update_playlist()
 
     def update_playlist(self):
-        logging.debug('update_playlist')
         self.last_update_db_mtime = self.get_db_mtime()
-        (new_assets, new_deadline) = generate_asset_list()
+        (new_assets, new_deadline) = self.generate_asset_list()
+
+        # If nothing changed, don't disturb the current play-through.
         if new_assets == self.assets and new_deadline == self.deadline:
-            # If nothing changed, don't disturb the current play-through.
             return
 
         self.assets, self.deadline = new_assets, new_deadline
         self.counter = 0
+
         # Try to keep the same position in the play list. E.g. if a new asset is added to the end of the list, we
         # don't want to start over from the beginning.
         self.index = self.index % len(self.assets) if self.assets else 0
-        logging.debug('update_playlist done, count %s, counter %s, index %s, deadline %s', len(self.assets), self.counter, self.index, self.deadline)
 
-    def get_db_mtime(self):
-        # get database file last modification time
-        try:
-            return path.getmtime(settings.get_path('database'))
-        except:
-            return 0
+        logging.debug('update_playlist done: count %s, counter %s, index %s, deadline %s', len(self.assets), self.counter, self.index, self.deadline)
 
+    @staticmethod
+    def get_db_mtime():
+        return path.getmtime(settings.get_path('database', home=HOME))
 
-def generate_asset_list():
-    logging.info('Generating asset-list...')
-    playlist = assets_helper.get_playlist(db_conn)
-    deadline = sorted([asset['end_date'] for asset in playlist])[0] if len(playlist) > 0 else None
-    logging.debug('generate_asset_list deadline: %s', deadline)
+    @staticmethod
+    def generate_asset_list():
+        logging.info('generate_asset_list...')
+        playlist = assets_helper.get_playlist(db_conn)
+        deadline = sorted([asset['end_date'] for asset in playlist])[0] if len(playlist) > 0 else None
+        logging.debug('generate_asset_list deadline: %s', deadline)
 
-    if settings['shuffle_playlist']:
-        shuffle(playlist)
+        if settings['shuffle_playlist']:
+            shuffle(playlist)
 
-    return playlist, deadline
+        return playlist, deadline
 
 
 def watchdog():

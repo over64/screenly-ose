@@ -6,12 +6,11 @@ from nose.plugins.attrib import attr
 import mock
 import unittest
 import os
+import viewer
 
 
 class ViewerTestCase(unittest.TestCase):
     def setUp(self):
-        import viewer
-
         self.original_splash_delay = viewer.SPLASH_DELAY
         viewer.SPLASH_DELAY = 0
 
