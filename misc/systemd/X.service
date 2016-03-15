@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/bin/X
-User=pi
+User=root
 Restart=on-failure
 
 [Install]
