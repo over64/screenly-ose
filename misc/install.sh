@@ -1,5 +1,5 @@
 sudo apt-get update
-sudo apt-get install -y python-setuptools python-dev git
+sudo apt-get install -y python-setuptools python-dev git-core
 sudo easy_install pip
 sudo pip install ansible
 
