@@ -1,5 +1,5 @@
 sudo apt-get update
-sudo apt-get install -q python-setuptools
+sudo apt-get install -y python-setuptools
 sudo easy_install pip
 sudo pip install ansible
 
