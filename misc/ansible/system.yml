@@ -39,6 +39,7 @@
         - sqlite3
         - omxplayer
         - matchbox
+        - xserver-xorg
 
     - name: DEPRECATIONS - Remove supervisor, lightdm
       apt: name={{ item }} state=absent
